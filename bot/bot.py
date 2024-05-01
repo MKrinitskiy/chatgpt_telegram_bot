@@ -548,6 +548,37 @@ async def docfile_message_handle(update: Update, context: CallbackContext):
     await message_handle_with_text_file(update, context, text=text)
 
 
+# MK
+# htmlfile_message_handle
+async def htmlfile_message_handle(update: Update, context: CallbackContext):
+    await register_user_if_not_exists(update, context, update.message.from_user)
+    if await is_previous_message_not_answered_yet(update, context): return
+
+    user_id = update.message.from_user.id
+    db.set_user_attribute(user_id, "last_interaction", datetime.now())
+
+    text = ""
+
+    # store file in memory, not on disk
+    buf = io.BytesIO()
+    
+    new_file = await update.message.document.get_file()
+    await new_file.download_to_memory(buf)
+
+    # await update.message.document.get_file().download_to_memory(buf)
+    buf.seek(0)  # move cursor to the beginning of the buffer
+    with tempfile.NamedTemporaryFile(delete=True) as temp:
+        temp.write(buf.read())
+        temp.flush()
+        content = textract.process(temp.name,
+                                   encoding='utf-8',
+                                   extension=".html").decode()
+
+        text = content
+
+    _ = await update.message.reply_text("you've sent a HTML file containing text: \n" + text[:200] + "...", parse_mode=ParseMode.HTML)
+
+    await message_handle_with_text_file(update, context, text=text)
 
 
 # MK
@@ -1167,6 +1198,7 @@ def run_bot() -> None:
     application.add_handler(MessageHandler(filters.Document.MimeType("application/epub+zip") & ~filters.COMMAND & user_filter, epubfile_message_handle))
     application.add_handler(MessageHandler(filters.Document.MimeType("application/vnd.openxmlformats-officedocument.wordprocessingml.document") & ~filters.COMMAND & user_filter, docxfile_message_handle))
     application.add_handler(MessageHandler(filters.Document.MimeType("application/msword") & ~filters.COMMAND & user_filter, docfile_message_handle))
+    application.add_handler(MessageHandler(filters.Document.MimeType("text/html") & ~filters.COMMAND & user_filter, htmlfile_message_handle))
     # 
 
     application.add_handler(MessageHandler(filters.Document.ALL & ~filters.COMMAND & user_filter, unsupport_message_handle))
