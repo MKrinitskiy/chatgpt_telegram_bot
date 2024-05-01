@@ -43,6 +43,10 @@ info:
   dalle-2:
      type: image
      price_per_1_image: 0.018  # 512x512
+    
+  dalle-3:
+     type: image
+     price_per_1_image: 0.08  # 1024×1024
 
   whisper:
     type: audio

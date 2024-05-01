@@ -9,6 +9,7 @@ RUN \
     python3-venv \
     ffmpeg \
     git \
+    vim \
     ; \
     rm -rf /var/lib/apt/lists/*
 

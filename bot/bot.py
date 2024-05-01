@@ -31,6 +31,9 @@ import config
 import database
 import openai_utils
 
+from pypdf import PdfReader
+import textract, tempfile
+
 import base64
 
 # setup
@@ -513,6 +516,131 @@ async def textfile_message_handle(update: Update, context: CallbackContext):
 
 
 # MK
+# docfile_message_handle
+async def docfile_message_handle(update: Update, context: CallbackContext):
+    await register_user_if_not_exists(update, context, update.message.from_user)
+    if await is_previous_message_not_answered_yet(update, context): return
+
+    user_id = update.message.from_user.id
+    db.set_user_attribute(user_id, "last_interaction", datetime.now())
+
+    text = ""
+
+    # store file in memory, not on disk
+    buf = io.BytesIO()
+    
+    new_file = await update.message.document.get_file()
+    await new_file.download_to_memory(buf)
+
+    # await update.message.document.get_file().download_to_memory(buf)
+    buf.seek(0)  # move cursor to the beginning of the buffer
+    with tempfile.NamedTemporaryFile(delete=True) as temp:
+        temp.write(buf.read())
+        temp.flush()
+        content = textract.process(temp.name,
+                                   encoding='utf-8',
+                                   extension=".doc").decode()
+
+        text = content
+
+    _ = await update.message.reply_text("you've sent a DOC file containing text: \n" + text[:200] + "...", parse_mode=ParseMode.HTML)
+
+    await message_handle_with_text_file(update, context, text=text)
+
+
+
+
+# MK
+async def docxfile_message_handle(update: Update, context: CallbackContext):
+    await register_user_if_not_exists(update, context, update.message.from_user)
+    if await is_previous_message_not_answered_yet(update, context): return
+
+    user_id = update.message.from_user.id
+    db.set_user_attribute(user_id, "last_interaction", datetime.now())
+
+    text = ""
+
+    # store file in memory, not on disk
+    buf = io.BytesIO()
+    
+    new_file = await update.message.document.get_file()
+    await new_file.download_to_memory(buf)
+
+    # await update.message.document.get_file().download_to_memory(buf)
+    buf.seek(0)  # move cursor to the beginning of the buffer
+    with tempfile.NamedTemporaryFile(delete=True) as temp:
+        temp.write(buf.read())
+        temp.flush()
+        content = textract.process(temp.name,
+                                   encoding='utf-8',
+                                   extension=".docx").decode()
+
+        text = content
+
+    _ = await update.message.reply_text("you've sent a DOCX file containing text: \n" + text[:200] + "...", parse_mode=ParseMode.HTML)
+
+    await message_handle_with_text_file(update, context, text=text)
+
+# MK
+async def epubfile_message_handle(update: Update, context: CallbackContext):
+    await register_user_if_not_exists(update, context, update.message.from_user)
+    if await is_previous_message_not_answered_yet(update, context): return
+
+    user_id = update.message.from_user.id
+    db.set_user_attribute(user_id, "last_interaction", datetime.now())
+
+    text = ""
+
+    # store file in memory, not on disk
+    buf = io.BytesIO()
+    
+    new_file = await update.message.document.get_file()
+    await new_file.download_to_memory(buf)
+
+    # await update.message.document.get_file().download_to_memory(buf)
+    buf.seek(0)  # move cursor to the beginning of the buffer
+    with tempfile.NamedTemporaryFile(delete=True) as temp:
+        temp.write(buf.read())
+        temp.flush()
+        content = textract.process(temp.name,
+                                   encoding='utf-8',
+                                   extension=".epub").decode()
+
+        text = content
+
+    _ = await update.message.reply_text("you've sent a EPUB file containing text: \n" + text[:200] + "...", parse_mode=ParseMode.HTML)
+
+    await message_handle_with_text_file(update, context, text=text)
+
+
+# MK
+async def pdffile_message_handle(update: Update, context: CallbackContext):
+    await register_user_if_not_exists(update, context, update.message.from_user)
+    if await is_previous_message_not_answered_yet(update, context): return
+
+    user_id = update.message.from_user.id
+    db.set_user_attribute(user_id, "last_interaction", datetime.now())
+
+    # store file in memory, not on disk
+    buf = io.BytesIO()
+    
+    new_file = await update.message.document.get_file()
+    await new_file.download_to_memory(buf)
+
+    # await update.message.document.get_file().download_to_memory(buf)
+    buf.seek(0)  # move cursor to the beginning of the buffer
+    reader = PdfReader(buf)
+
+    text = ""
+    for page in reader.pages:
+        text = text + page.extract_text()
+
+    _ = await update.message.reply_text("you've sent a PDF file containing text: \n" + text[:200] + "...", parse_mode=ParseMode.HTML)
+
+    await message_handle_with_text_file(update, context, text=text)
+
+
+# MK
 async def message_handle_with_text_file(update: Update, context: CallbackContext, text=None, use_new_dialog_timeout=True):
     # check if bot was mentioned (for group chats)
     if not await is_bot_mentioned(update, context):
@@ -667,10 +795,6 @@ async def message_handle_with_text_file(update: Update, context: CallbackContext
         finally:
             if user_id in user_tasks:
                 del user_tasks[user_id]
-
-
-
-
 
 
 
@@ -1039,6 +1163,11 @@ def run_bot() -> None:
     application.add_handler(MessageHandler(filters.VIDEO & ~filters.COMMAND & user_filter, unsupport_message_handle))
     # MK
     application.add_handler(MessageHandler(filters.Document.MimeType("text/plain") & ~filters.COMMAND & user_filter, textfile_message_handle))
+    application.add_handler(MessageHandler(filters.Document.MimeType("application/pdf") & ~filters.COMMAND & user_filter, pdffile_message_handle))
+    application.add_handler(MessageHandler(filters.Document.MimeType("application/epub+zip") & ~filters.COMMAND & user_filter, epubfile_message_handle))
+    application.add_handler(MessageHandler(filters.Document.MimeType("application/vnd.openxmlformats-officedocument.wordprocessingml.document") & ~filters.COMMAND & user_filter, docxfile_message_handle))
+    application.add_handler(MessageHandler(filters.Document.MimeType("application/msword") & ~filters.COMMAND & user_filter, docfile_message_handle))
+    # 
 
     application.add_handler(MessageHandler(filters.Document.ALL & ~filters.COMMAND & user_filter, unsupport_message_handle))
     application.add_handler(CommandHandler("retry", retry_handle, filters=user_filter))

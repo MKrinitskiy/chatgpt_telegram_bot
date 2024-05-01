@@ -4,7 +4,7 @@ This is the fork of original [ChatGPT Telegram Bot](https://github.com/father-bo
 
 This repo is ChatGPT re-created as Telegram Bot. **And it works great.**
 
-The main goal of this fork is to deploy the [original one](https://github.com/father-bot/chatgpt_telegram_bot) along with 
+The main goal of this fork is to deploy the [original one](https://github.com/father-bot/chatgpt_telegram_bot) along with implementing my own specific needs.
 
 ## Features
 - Low latency replies (it usually takes about 3-5 seconds)
@@ -25,6 +25,8 @@ The main goal of this fork is to deploy the [original one](https://github.com/fa
 ### MKrinitskiy:
 - *24 Apr 2024*: Added [gpt-4-turbo-2024-04-09](https://platform.openai.com/docs/models/gpt-4-turbo-and-gpt-4) support (aliased as `gpt-4-turbo`)
 - *25 Apr 2024*: Added summarizing chat mode
+- *26 Apr 2024*: Added text files summarizing in the summarizing chat mode
+- *28 Apr 2024*: DALL-E 2 changed to DALL-E 3
 
 ## Bot commands
 - `/retry` – Regenerate last bot answer
