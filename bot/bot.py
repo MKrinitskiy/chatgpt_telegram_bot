@@ -97,7 +97,7 @@ async def register_user_if_not_exists(update: Update, context: CallbackContext, 
     n_used_tokens = db.get_user_attribute(user.id, "n_used_tokens")
     if isinstance(n_used_tokens, int) or isinstance(n_used_tokens, float):  # old format
         new_n_used_tokens = {
-            "gpt-4-turbo": {
+            "gpt-4o": {
                 "n_input_tokens": 0,
                 "n_output_tokens": n_used_tokens
             }
@@ -907,7 +907,7 @@ async def new_dialog_handle(update: Update, context: CallbackContext):
 
     user_id = update.message.from_user.id
     db.set_user_attribute(user_id, "last_interaction", datetime.now())
-    db.set_user_attribute(user_id, "current_model", "gpt-4-turbo")
+    db.set_user_attribute(user_id, "current_model", "gpt-4o")
 
     db.start_new_dialog(user_id)
     await update.message.reply_text("Starting new dialog ✅")

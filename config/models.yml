@@ -1,13 +1,13 @@
-available_text_models: ["gpt-4-vision-preview", "gpt-4-turbo", "text-davinci-003"]
+available_text_models: ["gpt-4-vision-preview", "gpt-4o", "text-davinci-003"]
 
 info:
-  gpt-4-turbo:
+  gpt-4o:
     type: chat_completion
-    name: GPT-4 Turbo 2024-04-09
-    description: GPT-4 Turbo is a <b>faster</b> and <b>cheaper</b> version of GPT-4. It's as smart as GPT-4, so you should use it instead of GPT-4.
+    name: GPT-4o-2024-05-13
+    description: OpenAI`s most advanced, multimodal flagship model that`s cheaper and faster than GPT-4 Turbo.
 
-    price_per_1000_input_tokens: 0.01
-    price_per_1000_output_tokens: 0.03
+    price_per_1000_input_tokens: 0.005
+    price_per_1000_output_tokens: 0.015
 
     scores:
       smart: 5

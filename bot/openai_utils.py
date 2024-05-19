@@ -25,9 +25,9 @@ OPENAI_COMPLETION_OPTIONS = {
 
 
 class ChatGPT:
-    def __init__(self, model="gpt-4-turbo"):
+    def __init__(self, model="gpt-4o"):
         assert model in {"text-davinci-003",
-                         "gpt-4-turbo",
+                         "gpt-4o",
                          "gpt-4-vision-preview"}, f"Unknown model: {model}"
         self.model = model
 
@@ -39,7 +39,7 @@ class ChatGPT:
         answer = None
         while answer is None:
             try:
-                if self.model in {"gpt-4-turbo",
+                if self.model in {"gpt-4o",
                                   "gpt-4-vision-preview"}:
                     messages = self._generate_prompt_messages(message, dialog_messages, chat_mode)
 
@@ -81,7 +81,7 @@ class ChatGPT:
         answer = None
         while answer is None:
             try:
-                if self.model in {"gpt-4-turbo"}:
+                if self.model in {"gpt-4o"}:
                     messages = self._generate_prompt_messages(message, dialog_messages, chat_mode)
 
                     r_gen = await openai.ChatCompletion.acreate(
@@ -288,10 +288,10 @@ class ChatGPT:
         answer = answer.strip()
         return answer
 
-    def _count_tokens_from_messages(self, messages, answer, model="gpt-4-turbo"):
+    def _count_tokens_from_messages(self, messages, answer, model="gpt-4o"):
         encoding = tiktoken.encoding_for_model(model)
 
-        if model == "gpt-4-turbo":
+        if model == "gpt-4o":
             tokens_per_message = 3
             tokens_per_name = 1
         elif model == "gpt-4-vision-preview":

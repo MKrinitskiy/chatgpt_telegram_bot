@@ -23,6 +23,7 @@ The main goal of this fork is to deploy the [original one](https://github.com/fa
 
 ## News (compared to forked repo)
 ### MKrinitskiy:
+- *19 May 2024*: Replaced `gpt-4-turbo` with [GPT-4o](https://platform.openai.com/docs/models/gpt-4o).
 - *24 Apr 2024*: Added [gpt-4-turbo-2024-04-09](https://platform.openai.com/docs/models/gpt-4-turbo-and-gpt-4) support (aliased as `gpt-4-turbo`)
 - *25 Apr 2024*: Added summarizing chat mode
 - *26 Apr 2024*: Added text files summarizing in the summarizing chat mode
