@@ -9,7 +9,8 @@ services:
       - 127.0.0.1:${MONGODB_PORT:-27017}:${MONGODB_PORT:-27017}
     volumes:
       - ${MONGODB_PATH:-./mongodb}:/data/db
-    # TODO: add auth
+    networks:
+      - back-tier
 
   tgbot:
     container_name: tgbot
@@ -20,6 +21,9 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - mongo
+    networks:
+      - back-tier
+      - front-tier
 
   mongo_express:
     container_name: mongo-express
@@ -36,3 +40,10 @@ services:
       - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:-password}
     depends_on:
       - mongo
+    networks:
+      - back-tier
+      - front-tier
+
+networks:
+  front-tier:
+  back-tier:
