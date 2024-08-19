@@ -42,7 +42,10 @@ from service_defs import *
 # setup
 db = database.Database()
 EnsureDirectoryExists('./logs')
-logging.basicConfig(filename='./logs/bot.log', level=logging.INFO)
+logging.basicConfig(filename='./logs/bot.log',
+                    level=logging.INFO,
+                    format='%(asctime)s %(levelname)-8s %(message)s',
+                    datefmt='%Y-%m-%dT%H:%M:%S')
 logger = logging.getLogger(__name__)
 
 logger.info("Starting ChatGPT bot...")
@@ -70,7 +73,7 @@ async def register_user_if_not_exists(update: Update, context: CallbackContext, 
 
     if db.get_user_attribute(user.id, "current_model") is None:
         db.set_user_attribute(user.id, "current_model", config.models["available_text_models"][0])
-
+        
     # back compatibility for n_used_tokens field
     n_used_tokens = db.get_user_attribute(user.id, "n_used_tokens")
     if isinstance(n_used_tokens, int) or isinstance(n_used_tokens, float):  # old format

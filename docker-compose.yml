@@ -10,10 +10,11 @@ services:
     volumes:
       - ${MONGODB_PATH:-./mongodb}:/data/db
     networks:
-      - back-tier
+      - cgptg-back-tier
 
-  tgbot:
-    container_name: tgbot
+  cgptgbot:
+    image: cgptg-tgbot
+    container_name: cgptg-tgbot
     command: python3 bot/bot.py
     restart: always
     build:
@@ -21,18 +22,20 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - mongo
+    volumes:
+      - ./:/code
     networks:
-      - back-tier
-      - front-tier
+      - cgptg-back-tier
+      - cgptg-front-tier
 
-  mongo_express:
-    container_name: mongo-express
+  cgptg_mongoe:
+    container_name: cgptg-mongoe
     image: mongo-express:latest
     restart: always
     ports:
       - 127.0.0.1:${MONGO_EXPRESS_PORT:-8081}:${MONGO_EXPRESS_PORT:-8081}
     environment:
-      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_SERVER=${MONGODB_HOSTNAME:-mongo}
       - ME_CONFIG_MONGODB_PORT=${MONGODB_PORT:-27017}
       - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
       - ME_CONFIG_MONGODB_AUTH_DATABASE=chatgpt_telegram_bot
@@ -41,9 +44,11 @@ services:
     depends_on:
       - mongo
     networks:
-      - back-tier
-      - front-tier
+      - cgptg-back-tier
+      - cgptg-front-tier
 
 networks:
-  front-tier:
-  back-tier:
+  cgptg-front-tier:
+    name: cgptg-front-tier
+  cgptg-back-tier:
+    name: cgptg-back-tier
