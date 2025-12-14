@@ -1,50 +1,71 @@
-available_text_models: ["gpt-4o", "gpt-4o-mini"]
+available_text_models: ["gpt-5-mini", "gpt-5.1", "gpt-5.2"]
+# available_text_models: ["gpt-5-mini"]
 
 info:
-  gpt-4o:
-    type: chat_completion
-    name: GPT-4o
-    description: OpenAI`s most advanced multimodal model that’s faster and cheaper than GPT-4 Turbo with stronger vision capabilities. The model has 128K context and an October 2023 knowledge cutoff.
+  # gpt-4o:
+  #   type: chat_completion
+  #   name: GPT-4o
+  #   description: OpenAI`s most advanced multimodal model that’s faster and cheaper than GPT-4 Turbo with stronger vision capabilities. The model has 128K context and an October 2023 knowledge cutoff.
 
-    price_per_1000_input_tokens: 0.005
-    price_per_1000_output_tokens: 0.015
+  #   price_per_1000_input_tokens: 0.005
+  #   price_per_1000_output_tokens: 0.015
+
+  #   scores:
+  #     smart: 5
+  #     fast: 4
+  #     cheap: 3
+  
+  # gpt-4o-mini:
+  #   type: chat_completion
+  #   name: GPT-4o-mini
+  #   description: OpenAI`s most cost-efficient small model that’s smarter and cheaper than GPT-3.5 Turbo, and has vision capabilities. The model has 128K context and an October 2023 knowledge cutoff.
+
+  #   price_per_1000_input_tokens: 0.005
+  #   price_per_1000_output_tokens: 0.015
+
+  #   scores:
+  #     smart: 5
+  #     fast: 4
+  #     cheap: 3
+    
+  gpt-5-mini:
+    type: chat_completion
+    name: gpt-5-mini
+    description: GPT-5 mini is a faster, more cost-efficient version of GPT-5. It's great for well-defined tasks and precise prompts. The model has 400K context and an May 31, 2024 knowledge cutoff.
+
+    price_per_1000_input_tokens: 0.00025
+    price_per_1000_output_tokens: 0.002
 
     scores:
       smart: 5
       fast: 4
       cheap: 3
   
-  gpt-4o-mini:
-    type: chat_completion
-    name: GPT-4o-mini
-    description: OpenAI`s most cost-efficient small model that’s smarter and cheaper than GPT-3.5 Turbo, and has vision capabilities. The model has 128K context and an October 2023 knowledge cutoff.
 
-    price_per_1000_input_tokens: 0.005
-    price_per_1000_output_tokens: 0.015
+  gpt-5.1:
+    type: chat_completion
+    name: gpt-5.1
+    description: GPT-5.1 is our flagship model for coding and agentic tasks with configurable reasoning and non-reasoning effort. OpenAI recommends GPT-5.1 for most API usage. The model has 128K context and an Sep 30, 2024 knowledge cutoff.
+
+    price_per_1000_input_tokens: 0.00125
+    price_per_1000_output_tokens: 0.01
 
     scores:
-      smart: 5
-      fast: 4
-      cheap: 3
+      smart: 7
+      fast: 3
+      cheap: 2
+  
 
-  # gpt-4-vision-preview:
-  #   type: chat_completion
-  #   name: GPT-4 Vision
-  #   description: Ability to <b>understand images</b>, in addition to all other GPT-4 Turbo capabilties.
+  gpt-5.2:
+    type: chat_completion
+    name: gpt-5.2
+    description: GPT-5.2 is OpenAI's flagship model for coding and agentic tasks across industries. The model has 400K context and an Aug 31, 2025 knowledge cutoff.
 
-  #   price_per_1000_input_tokens: 0.01
-  #   price_per_1000_output_tokens: 0.03
+    price_per_1000_input_tokens: 0.00175
+    price_per_1000_output_tokens: 0.014
 
-  #   scores:
-  #     smart: 5
-  #     fast: 4
-  #     cheap: 3
-
-
-  # dalle-2:
-  #    type: image
-  #    price_per_1_image: 0.018  # 512x512
-    
-  # dalle-3:
-  #    type: image
-  #    price_per_1_image: 0.08  # 1024×1024
+    scores:
+      smart: 8
+      fast: 3
+      cheap: 1
+  

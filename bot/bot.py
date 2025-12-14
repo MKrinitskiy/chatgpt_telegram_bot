@@ -78,7 +78,7 @@ async def register_user_if_not_exists(update: Update, context: CallbackContext, 
     n_used_tokens = db.get_user_attribute(user.id, "n_used_tokens")
     if isinstance(n_used_tokens, int) or isinstance(n_used_tokens, float):  # old format
         new_n_used_tokens = {
-            "gpt-4o": {
+            "gpt-5-mini": {
                 "n_input_tokens": 0,
                 "n_output_tokens": n_used_tokens
             }
@@ -86,12 +86,12 @@ async def register_user_if_not_exists(update: Update, context: CallbackContext, 
         db.set_user_attribute(user.id, "n_used_tokens", new_n_used_tokens)
 
     # voice message transcription
-    if db.get_user_attribute(user.id, "n_transcribed_seconds") is None:
-        db.set_user_attribute(user.id, "n_transcribed_seconds", 0.0)
+    # if db.get_user_attribute(user.id, "n_transcribed_seconds") is None:
+    #     db.set_user_attribute(user.id, "n_transcribed_seconds", 0.0)
 
     # image generation
-    if db.get_user_attribute(user.id, "n_generated_images") is None:
-        db.set_user_attribute(user.id, "n_generated_images", 0)
+    # if db.get_user_attribute(user.id, "n_generated_images") is None:
+    #     db.set_user_attribute(user.id, "n_generated_images", 0)
 
 
 
@@ -172,16 +172,15 @@ async def retry_handle(update: Update, context: CallbackContext):
 async def _vision_message_handle_fn(
     update: Update, context: CallbackContext, use_new_dialog_timeout: bool = True
 ):
+    current_temperature = db.get_user_attribute(user_id, "current_temperature")
+    if current_model in {"gpt-5-mini", "gpt-5.1", "gpt-5.2"}:
+        current_temperature = 1.0
+    else:
+        pass
+
     logger.info('_vision_message_handle_fn')
     user_id = update.message.from_user.id
     current_model = db.get_user_attribute(user_id, "current_model")
-
-    # if current_model != "gpt-4-vision-preview":
-    #     await update.message.reply_text(
-    #         "🥲 Images processing is only available for <b>gpt-4-vision-preview</b> model. Please change your settings in /settings",
-    #         parse_mode=ParseMode.HTML,
-    #     )
-    #     return
 
     chat_mode = db.get_user_attribute(user_id, "current_chat_mode")
 
@@ -226,6 +225,7 @@ async def _vision_message_handle_fn(
                 dialog_messages=dialog_messages,
                 image_buffer=buf,
                 chat_mode=chat_mode,
+                temperature=current_temperature
             )
         else:
             (
@@ -237,6 +237,7 @@ async def _vision_message_handle_fn(
                 dialog_messages=dialog_messages,
                 image_buffer=buf,
                 chat_mode=chat_mode,
+                temperature=current_temperature
             )
 
             async def fake_gen():
@@ -358,6 +359,12 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
     current_model = db.get_user_attribute(user_id, "current_model")
 
     async def message_handle_fn():
+        current_temperature = db.get_user_attribute(user_id, "current_temperature")
+        if current_model in {"gpt-5-mini"}:
+            current_temperature = 1.0
+        else:
+            pass
+
         # new dialog timeout
         if use_new_dialog_timeout:
             if (datetime.now() - db.get_user_attribute(user_id, "last_interaction")).seconds > config.new_dialog_timeout and len(db.get_dialog_messages(user_id)) > 0:
@@ -387,12 +394,16 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
 
             chatgpt_instance = openai_utils.ChatGPT(model=current_model)
             if config.enable_message_streaming:
-                gen = chatgpt_instance.send_message_stream(_message, dialog_messages=dialog_messages, chat_mode=chat_mode)
+                gen = chatgpt_instance.send_message_stream(_message,
+                                                           dialog_messages=dialog_messages,
+                                                           chat_mode=chat_mode,
+                                                           temperature=current_temperature)
             else:
                 answer, (n_input_tokens, n_output_tokens), n_first_dialog_messages_removed = await chatgpt_instance.send_message(
                     _message,
                     dialog_messages=dialog_messages,
-                    chat_mode=chat_mode
+                    chat_mode=chat_mode,
+                    temperature=current_temperature
                 )
 
                 async def fake_gen():
@@ -402,8 +413,22 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
 
             prev_answer = ""
             
+            # k_flush = 0
             async for gen_item in gen:
                 status, answer, (n_input_tokens, n_output_tokens), n_first_dialog_messages_removed = gen_item
+
+                # if len(answer) - k_flush*4096 > 4096:
+                #     k_flush += 1
+                #     answer_flush = answer[(k_flush-1)*4096:k_flush*4096]
+                #     answer = answer[k_flush*4096:]
+                #     try:
+                #         await context.bot.edit_message_text(answer_flush, chat_id=placeholder_message.chat_id, message_id=placeholder_message.message_id, parse_mode=parse_mode)
+                #     except telegram.error.BadRequest as e:
+                #         if str(e).startswith("Message is not modified"):
+                #             continue
+                #         else:
+                #             await context.bot.edit_message_text(answer_flush, chat_id=placeholder_message.chat_id, message_id=placeholder_message.message_id)
+                #     placeholder_message = await update.message.reply_text("...")
 
                 answer = answer[:4096]  # telegram message limit
                     
@@ -695,6 +720,11 @@ async def message_handle_with_text_file(update: Update, context: CallbackContext
     current_model = db.get_user_attribute(user_id, "current_model")
 
     async def message_handle_fn():
+        current_temperature = db.get_user_attribute(user_id, "current_temperature")
+        if current_model in {"gpt-5-mini"}:
+            current_temperature = 1.0
+        else:
+            pass
         # new dialog timeout
         if use_new_dialog_timeout:
             if (datetime.now() - db.get_user_attribute(user_id, "last_interaction")).seconds > config.new_dialog_timeout and len(db.get_dialog_messages(user_id)) > 0:
@@ -724,12 +754,16 @@ async def message_handle_with_text_file(update: Update, context: CallbackContext
 
             chatgpt_instance = openai_utils.ChatGPT(model=current_model)
             if config.enable_message_streaming:
-                gen = chatgpt_instance.send_message_stream(_message, dialog_messages=dialog_messages, chat_mode=chat_mode)
+                gen = chatgpt_instance.send_message_stream(_message,
+                                                           dialog_messages=dialog_messages,
+                                                           chat_mode=chat_mode,
+                                                           temperature=current_temperature)
             else:
                 answer, (n_input_tokens, n_output_tokens), n_first_dialog_messages_removed = await chatgpt_instance.send_message(
                     _message,
                     dialog_messages=dialog_messages,
-                    chat_mode=chat_mode
+                    chat_mode=chat_mode,
+                    temperature=current_temperature
                 )
 
                 async def fake_gen():
@@ -896,7 +930,7 @@ async def new_dialog_handle(update: Update, context: CallbackContext):
 
     user_id = update.message.from_user.id
     db.set_user_attribute(user_id, "last_interaction", datetime.now())
-    db.set_user_attribute(user_id, "current_model", "gpt-4o-mini")
+    db.set_user_attribute(user_id, "current_model", "gpt-5-mini")
 
     db.start_new_dialog(user_id)
     await update.message.reply_text("Starting new dialog ✅")
@@ -1009,6 +1043,8 @@ async def set_chat_mode_handle(update: Update, context: CallbackContext):
 
 def get_settings_menu(user_id: int):
     current_model = db.get_user_attribute(user_id, "current_model")
+    if current_model not in config.models["available_text_models"]:
+        current_model = config.default_model
     text = config.models["info"][current_model]["description"]
 
     text += "\n\n"
@@ -1031,6 +1067,47 @@ def get_settings_menu(user_id: int):
     reply_markup = InlineKeyboardMarkup([buttons])
 
     return text, reply_markup
+
+
+
+async def model_temperature_handle(update: Update, context: CallbackContext):
+    await register_user_if_not_exists(update, context, update.message.from_user)
+    if await is_previous_message_not_answered_yet(update, context): return
+
+    user_id = update.message.from_user.id
+    db.set_user_attribute(user_id, "last_interaction", datetime.now())
+
+    text, reply_markup = get_model_temperature_menu(user_id)
+
+    await update.message.reply_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+
+
+def get_model_temperature_menu(user_id: int):
+    current_temperature = db.get_user_attribute(user_id, "current_temperature")
+    text = f"Current model temperature: {current_temperature}"
+
+    buttons = []    
+    for temperature in [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99]:
+        buttons.append(InlineKeyboardButton(f"{temperature}", callback_data=f"set_model_temperature|{temperature}"))
+    reply_markup = InlineKeyboardMarkup([buttons])
+
+    return text, reply_markup
+
+
+async def set_model_temperature_handle(update: Update, context: CallbackContext):
+    await register_user_if_not_exists(update.callback_query, context, update.callback_query.from_user)
+    user_id = update.callback_query.from_user.id
+
+    db.set_user_attribute(user_id, "last_interaction", datetime.now())
+
+    query = update.callback_query
+    await query.answer()
+
+    temperature = float(query.data.split("|")[1])
+    db.set_user_attribute(user_id, "current_temperature", temperature)
+
+    text = f"Model temperature set to {temperature}"
+    await query.edit_message_text(text, parse_mode=ParseMode.HTML)
 
 
 async def settings_handle(update: Update, context: CallbackContext):
@@ -1150,6 +1227,7 @@ async def post_init(application: Application):
         BotCommand("/retry", "Re-generate response for previous query"),
         BotCommand("/balance", "Show balance"),
         BotCommand("/settings", "Show settings"),
+        BotCommand("/model_temperature", "Show model temperature"),
         BotCommand("/help", "Show help message"),
     ])
 
@@ -1204,6 +1282,9 @@ def run_bot() -> None:
 
     application.add_handler(CommandHandler("settings", settings_handle, filters=user_filter))
     application.add_handler(CallbackQueryHandler(set_settings_handle, pattern="^set_settings"))
+
+    application.add_handler(CommandHandler("model_temperature", model_temperature_handle, filters=user_filter))
+    application.add_handler(CallbackQueryHandler(set_model_temperature_handle, pattern="^set_model_temperature"))
 
     # application.add_handler(CommandHandler("balance", show_balance_handle, filters=user_filter))
 

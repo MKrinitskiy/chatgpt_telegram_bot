@@ -14,9 +14,19 @@ if config.openai_api_base is not None:
 logger = logging.getLogger(__name__)
 
 
+# OPENAI_COMPLETION_OPTIONS = {
+#     "temperature": 0.7,
+#     "max_tokens": 1000,
+#     "max_completion_tokens": 1000,
+#     "top_p": 1,
+#     "frequency_penalty": 0,
+#     "presence_penalty": 0,
+#     "request_timeout": 60.0,
+# }
+
 OPENAI_COMPLETION_OPTIONS = {
-    "temperature": 0.7,
-    "max_tokens": 1000,
+    "temperature": 1.0,                     # only 1.0 is supported for gpt-5-mini
+    "max_completion_tokens": 1000,
     "top_p": 1,
     "frequency_penalty": 0,
     "presence_penalty": 0,
@@ -25,12 +35,13 @@ OPENAI_COMPLETION_OPTIONS = {
 
 
 class ChatGPT:
-    def __init__(self, model="gpt-4o"):
-        assert model in {"gpt-4o",
-                         "gpt-4o-mini"}, f"Unknown model: {model}"
+    def __init__(self, model="gpt-5-mini"):
+        assert model in {"gpt-5-mini",
+                         "gpt-5.1",
+                         "gpt-5.2"}, f"Unknown model: {model}"
         self.model = model
 
-    async def send_message(self, message, dialog_messages=[], chat_mode="assistant"):
+    async def send_message(self, message, dialog_messages=[], chat_mode="assistant", temperature=None):
         if chat_mode not in config.chat_modes.keys():
             raise ValueError(f"Chat mode {chat_mode} is not supported")
 
@@ -38,9 +49,13 @@ class ChatGPT:
         answer = None
         while answer is None:
             try:
-                if self.model in {"gpt-4o",
-                                  "gpt-4o-mini"}:
+                if self.model in {"gpt-5-mini",
+                                  "gpt-5.1",
+                                  "gpt-5.2"}:
                     messages = self._generate_prompt_messages(message, dialog_messages, chat_mode)
+
+                    if temperature is not None:
+                        OPENAI_COMPLETION_OPTIONS["temperature"] = temperature
 
                     r = await openai.ChatCompletion.acreate(
                         model=self.model,
@@ -64,7 +79,7 @@ class ChatGPT:
 
         return answer, (n_input_tokens, n_output_tokens), n_first_dialog_messages_removed
 
-    async def send_message_stream(self, message, dialog_messages=[], chat_mode="assistant"):
+    async def send_message_stream(self, message, dialog_messages=[], chat_mode="assistant", temperature=None):
         if chat_mode not in config.chat_modes.keys():
             raise ValueError(f"Chat mode {chat_mode} is not supported")
 
@@ -72,8 +87,13 @@ class ChatGPT:
         answer = None
         while answer is None:
             try:
-                if self.model in {"gpt-4o", "gpt-4o-mini"}:
+                if self.model in {"gpt-5-mini",
+                                  "gpt-5.1",
+                                  "gpt-5.2"}:
                     messages = self._generate_prompt_messages(message, dialog_messages, chat_mode)
+
+                    if temperature is not None:
+                        OPENAI_COMPLETION_OPTIONS["temperature"] = temperature
 
                     r_gen = await openai.ChatCompletion.acreate(
                         model=self.model,
@@ -110,6 +130,7 @@ class ChatGPT:
         dialog_messages=[],
         chat_mode="assistant",
         image_buffer: BytesIO = None,
+        temperature=None,
     ):
         n_dialog_messages_before = len(dialog_messages)
         answer = None
@@ -119,6 +140,9 @@ class ChatGPT:
                     messages = self._generate_prompt_messages(
                         message, dialog_messages, chat_mode, image_buffer
                     )
+                    if temperature is not None:
+                        OPENAI_COMPLETION_OPTIONS["temperature"] = temperature
+
                     r = await openai.ChatCompletion.acreate(
                         model=self.model,
                         messages=messages,
@@ -158,6 +182,7 @@ class ChatGPT:
         dialog_messages=[],
         chat_mode="assistant",
         image_buffer: BytesIO = None,
+        temperature=None,
     ):
         n_dialog_messages_before = len(dialog_messages)
         answer = None
@@ -168,6 +193,9 @@ class ChatGPT:
                         message, dialog_messages, chat_mode, image_buffer
                     )
                     
+                    if temperature is not None:
+                        OPENAI_COMPLETION_OPTIONS["temperature"] = temperature
+
                     r_gen = await openai.ChatCompletion.acreate(
                         model=self.model,
                         messages=messages,
@@ -262,10 +290,13 @@ class ChatGPT:
         answer = answer.strip()
         return answer
 
-    def _count_tokens_from_messages(self, messages, answer, model="gpt-4o"):
-        encoding = tiktoken.encoding_for_model(model)
+    def _count_tokens_from_messages(self, messages, answer, model="gpt-5-mini"):
+        # encoding = tiktoken.encoding_for_model(model)
+        encoding = tiktoken.get_encoding("o200k_base")
 
-        if model in {"gpt-4o", "gpt-4o-mini"}:
+        if model in {"gpt-5-mini",
+                     "gpt-5.1",
+                     "gpt-5.2"}:
             tokens_per_message = 3
             tokens_per_name = 1
         # elif model == "gpt-4-vision-preview":
@@ -300,8 +331,9 @@ class ChatGPT:
 
         return n_input_tokens, n_output_tokens
 
-    def _count_tokens_from_prompt(self, prompt, answer, model="gpt-4o"):
-        encoding = tiktoken.encoding_for_model(model)
+    def _count_tokens_from_prompt(self, prompt, answer, model="gpt-5-mini"):
+        # encoding = tiktoken.encoding_for_model(model)
+        encoding = tiktoken.get_encoding("o200k_base")
 
         n_input_tokens = len(encoding.encode(prompt)) + 1
         n_output_tokens = len(encoding.encode(answer))
