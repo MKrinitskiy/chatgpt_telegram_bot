@@ -18,6 +18,20 @@ openai_api_base = config_yaml.get("openai_api_base", None)
 allowed_telegram_usernames = config_yaml["allowed_telegram_usernames"]
 new_dialog_timeout = config_yaml["new_dialog_timeout"]
 enable_message_streaming = config_yaml.get("enable_message_streaming", True)
+log_openai_requests = config_yaml.get("log_openai_requests", False)
+log_openai_responses = config_yaml.get("log_openai_responses", False)
+_default_completion_options = {
+    "temperature": 1.0,
+    "max_completion_tokens": 1000,
+    "top_p": 1,
+    "frequency_penalty": 0,
+    "presence_penalty": 0,
+    "request_timeout": 60.0,
+}
+openai_completion_options = {
+    **_default_completion_options,
+    **config_yaml.get("openai_completion_options", {}),
+}
 return_n_generated_images = config_yaml.get("return_n_generated_images", 1)
 image_size = config_yaml.get("image_size", "512x512")
 n_chat_modes_per_page = config_yaml.get("n_chat_modes_per_page", 5)

@@ -11,7 +11,6 @@ The main goal of this fork is to deploy the [original one](https://github.com/fa
 - No request limits
 - Message streaming
 - GPT-4 and GPT-4 Turbo support
-- GPT-4 Vision support
 - DALLE 2 (choose 👩‍🎨 Artist mode to generate images)
 - Voice message recognition
 - Code highlighting
