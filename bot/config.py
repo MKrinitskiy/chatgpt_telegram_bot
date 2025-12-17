@@ -22,7 +22,7 @@ log_openai_requests = config_yaml.get("log_openai_requests", False)
 log_openai_responses = config_yaml.get("log_openai_responses", False)
 _default_completion_options = {
     "temperature": 1.0,
-    "max_completion_tokens": 1000,
+    "max_completion_tokens": 20000,
     "top_p": 1,
     "frequency_penalty": 0,
     "presence_penalty": 0,
