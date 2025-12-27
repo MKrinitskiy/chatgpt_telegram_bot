@@ -26,7 +26,6 @@ from telegram.ext import (
     filters
 )
 from telegram.constants import ParseMode, ChatAction
-from telegram.helpers import escape_markdown
 
 import config
 import database
@@ -61,7 +60,7 @@ def format_text_for_parse_mode(text: str, parse_mode: ParseMode) -> str:
     if parse_mode == ParseMode.HTML:
         return html.escape(text)
     if parse_mode == ParseMode.MARKDOWN:
-        return escape_markdown(text, version=2)
+        return text
     return text
 
 
